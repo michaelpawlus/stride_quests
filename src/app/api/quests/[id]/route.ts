@@ -9,6 +9,7 @@ import {
 } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import type { CheckpointDetail, QuestDetail } from "@/types";
+import { isNextScavengerCheckpoint } from "@/lib/quest-utils";
 
 export async function GET(
   _request: NextRequest,
@@ -159,16 +160,3 @@ export async function POST(
   return NextResponse.json({ status: "activated" }, { status: 201 });
 }
 
-function isNextScavengerCheckpoint(
-  cp: { id: number; sortOrder: number },
-  allCheckpoints: { id: number; sortOrder: number }[],
-  hitIds: Set<number>
-): boolean {
-  const sorted = [...allCheckpoints].sort((a, b) => a.sortOrder - b.sortOrder);
-  for (const c of sorted) {
-    if (!hitIds.has(c.id)) {
-      return c.id === cp.id;
-    }
-  }
-  return false;
-}

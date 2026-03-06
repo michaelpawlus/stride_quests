@@ -53,6 +53,29 @@ export type QuestDetail = QuestWithProgress & {
   checkpoints: CheckpointDetail[];
 };
 
+export type MapCheckpoint = {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  isCompleted: boolean;
+};
+
+export type MapQuest = {
+  id: number;
+  name: string;
+  type: QuestType;
+  difficulty: QuestDifficulty;
+  status: QuestStatus | "available";
+  checkpoints: MapCheckpoint[];
+  routePolylines: string[];
+};
+
+export type MapData = {
+  quests: MapQuest[];
+};
+
 export type StravaTokens = {
   accessToken: string;
   refreshToken: string;
