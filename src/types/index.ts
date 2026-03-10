@@ -76,6 +76,18 @@ export type MapData = {
   quests: MapQuest[];
 };
 
+export type BadgeCategory = "quest" | "momentum" | "xp" | "activity";
+
+export type UserBadge = {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  category: BadgeCategory;
+  unlocked: boolean;
+  unlockedAt: string | null;
+};
+
 export type StravaTokens = {
   accessToken: string;
   refreshToken: string;

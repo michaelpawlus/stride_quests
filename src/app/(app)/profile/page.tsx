@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/header";
 import { StravaConnect } from "@/components/profile/strava-connect";
 import { UserStatsDisplay } from "@/components/profile/user-stats";
+import { BadgeGrid } from "@/components/profile/badge-grid";
 import { getSession } from "@/lib/session";
 import { db } from "@/db";
 import { users, userStats } from "@/db/schema";
@@ -58,6 +59,8 @@ export default async function ProfilePage() {
             }}
           />
         )}
+
+        <BadgeGrid />
       </main>
     </>
   );

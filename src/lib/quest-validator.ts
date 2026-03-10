@@ -13,6 +13,7 @@ import { getValidAccessToken, getActivity } from "./strava";
 import { decodePolyline } from "./polyline";
 import { checkRouteAgainstGeofence } from "./geo";
 import { logRunDay, awardRestCredits, getOrCreateStats } from "./momentum";
+import { checkAndAwardBadges } from "./badges";
 
 /**
  * Main orchestrator: processes a Strava activity for a user.
@@ -158,6 +159,8 @@ export async function processStravaActivity(
       completeQuest(userId, uq.id, quest.xpReward, quest.restCreditReward);
     }
   }
+
+  checkAndAwardBadges(userId);
 }
 
 function getNextScavengerCheckpoints<T extends { id: number; sortOrder: number }>(

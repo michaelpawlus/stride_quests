@@ -5,6 +5,7 @@ import {
   reconcileMissedDays,
   getRecentDays,
 } from "@/lib/momentum";
+import { checkAndAwardBadges } from "@/lib/badges";
 import type { UserMomentum } from "@/types";
 
 export async function GET() {
@@ -15,6 +16,7 @@ export async function GET() {
 
   // Reconcile any missed days first
   reconcileMissedDays(session.userId);
+  checkAndAwardBadges(session.userId);
 
   const stats = getOrCreateStats(session.userId);
   const recentDays = getRecentDays(session.userId, 30);

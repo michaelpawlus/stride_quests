@@ -125,6 +125,17 @@ export const momentumLog = sqliteTable("momentum_log", {
     .default(false),
 });
 
+export const userBadges = sqliteTable("user_badges", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  badgeId: text("badge_id").notNull(),
+  unlockedAt: text("unlocked_at")
+    .notNull()
+    .default(sql`(datetime('now'))`),
+});
+
 export const userStats = sqliteTable("user_stats", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id")
