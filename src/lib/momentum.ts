@@ -10,10 +10,10 @@ function dateString(d: Date): string {
   return d.toISOString().split("T")[0];
 }
 
-export function logRunDay(userId: number, date?: string): void {
+export async function logRunDay(userId: number, date?: string): Promise<void> {
   const day = date ?? todayString();
 
-  const existing = db
+  const existing = await db
     .select()
     .from(momentumLog)
     .where(and(eq(momentumLog.userId, userId), eq(momentumLog.date, day)))
@@ -21,7 +21,7 @@ export function logRunDay(userId: number, date?: string): void {
 
   if (existing) {
     if (!existing.didRun) {
-      db.update(momentumLog)
+      await db.update(momentumLog)
         .set({ didRun: true, usedRestCredit: false, streakBroken: false })
         .where(eq(momentumLog.id, existing.id))
         .run();
@@ -29,38 +29,38 @@ export function logRunDay(userId: number, date?: string): void {
     return;
   }
 
-  db.insert(momentumLog)
+  await db.insert(momentumLog)
     .values({ userId, date: day, didRun: true })
     .run();
 
   // Award 1 base rest credit for running
-  awardRestCredits(userId, 1);
+  await awardRestCredits(userId, 1);
 }
 
-export function awardRestCredits(userId: number, amount: number): void {
-  const stats = getOrCreateStats(userId);
+export async function awardRestCredits(userId: number, amount: number): Promise<void> {
+  const stats = await getOrCreateStats(userId);
   const newCredits = Math.min(stats.restCredits + amount, stats.maxRestCredits);
 
-  db.update(userStats)
+  await db.update(userStats)
     .set({ restCredits: newCredits })
     .where(eq(userStats.userId, userId))
     .run();
 }
 
-export function getOrCreateStats(userId: number) {
-  let stats = db
+export async function getOrCreateStats(userId: number) {
+  let stats = await db
     .select()
     .from(userStats)
     .where(eq(userStats.userId, userId))
     .get();
 
   if (!stats) {
-    db.insert(userStats).values({ userId }).run();
-    stats = db
+    await db.insert(userStats).values({ userId }).run();
+    stats = (await db
       .select()
       .from(userStats)
       .where(eq(userStats.userId, userId))
-      .get()!;
+      .get())!;
   }
 
   return stats;
@@ -70,13 +70,13 @@ export function getOrCreateStats(userId: number) {
  * Fill in any missed days between the last logged day and today.
  * For each missed day, consume a rest credit or break the streak.
  */
-export function reconcileMissedDays(userId: number): void {
-  const stats = getOrCreateStats(userId);
+export async function reconcileMissedDays(userId: number): Promise<void> {
+  const stats = await getOrCreateStats(userId);
   const today = new Date();
   today.setHours(0, 0, 0, 0);
 
   // Find the most recent log entry
-  const lastLog = db
+  const lastLog = await db
     .select()
     .from(momentumLog)
     .where(eq(momentumLog.userId, userId))
@@ -97,7 +97,7 @@ export function reconcileMissedDays(userId: number): void {
   while (cursor < today) {
     const day = dateString(cursor);
 
-    const existing = db
+    const existing = await db
       .select()
       .from(momentumLog)
       .where(and(eq(momentumLog.userId, userId), eq(momentumLog.date, day)))
@@ -107,7 +107,7 @@ export function reconcileMissedDays(userId: number): void {
       if (currentCredits > 0) {
         // Use a rest credit
         currentCredits--;
-        db.insert(momentumLog)
+        await db.insert(momentumLog)
           .values({
             userId,
             date: day,
@@ -118,7 +118,7 @@ export function reconcileMissedDays(userId: number): void {
           .run();
       } else {
         // Streak broken
-        db.insert(momentumLog)
+        await db.insert(momentumLog)
           .values({
             userId,
             date: day,
@@ -134,20 +134,20 @@ export function reconcileMissedDays(userId: number): void {
   }
 
   // Update rest credits
-  db.update(userStats)
+  await db.update(userStats)
     .set({ restCredits: currentCredits })
     .where(eq(userStats.userId, userId))
     .run();
 
   // Recalculate streak
-  recalculateMomentum(userId);
+  await recalculateMomentum(userId);
 }
 
 /**
  * Count consecutive days backward from yesterday where streak was not broken.
  */
-export function recalculateMomentum(userId: number): void {
-  const logs = db
+export async function recalculateMomentum(userId: number): Promise<void> {
+  const logs = await db
     .select()
     .from(momentumLog)
     .where(eq(momentumLog.userId, userId))
@@ -164,17 +164,17 @@ export function recalculateMomentum(userId: number): void {
     }
   }
 
-  const stats = getOrCreateStats(userId);
+  const stats = await getOrCreateStats(userId);
   const longestStreak = Math.max(stats.longestStreak, streak);
 
-  db.update(userStats)
+  await db.update(userStats)
     .set({ currentStreak: streak, longestStreak })
     .where(eq(userStats.userId, userId))
     .run();
 }
 
-export function getRecentDays(userId: number, count: number = 30) {
-  return db
+export async function getRecentDays(userId: number, count: number = 30) {
+  return await db
     .select()
     .from(momentumLog)
     .where(eq(momentumLog.userId, userId))

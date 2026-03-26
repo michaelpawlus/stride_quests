@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import { drizzle } from "drizzle-orm/libsql";
+import { createClient } from "@libsql/client";
 import * as schema from "./schema";
 import path from "path";
 import fs from "fs";
@@ -9,12 +9,12 @@ if (!fs.existsSync(dbDir)) {
   fs.mkdirSync(dbDir, { recursive: true });
 }
 
-const dbPath = path.join(dbDir, "stride_quests.db");
-const sqlite = new Database(dbPath);
-sqlite.pragma("journal_mode = WAL");
-sqlite.pragma("foreign_keys = ON");
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL ?? `file:${path.join(dbDir, "stride_quests.db")}`,
+  authToken: process.env.TURSO_AUTH_TOKEN,
+});
 
-const db = drizzle(sqlite, { schema });
+const db = drizzle(client, { schema });
 
 type QuestSeed = {
   name: string;
@@ -327,6 +327,192 @@ const questSeeds: QuestSeed[] = [
     ],
   },
 
+  // === CLINTONVILLE QUESTS ===
+
+  // Point-to-Point (Easy)
+  {
+    name: "Clintonville Cruise",
+    description:
+      "Run the heart of Clintonville along High Street, from the North Broadway crossroads up to the Whetstone Library.",
+    flavorText:
+      "The neighborhood's main artery pulses with coffee shops and character. Lace up and cruise.",
+    type: "point_to_point",
+    difficulty: "easy",
+    xpReward: 100,
+    restCreditReward: 1,
+    checkpoints: [
+      {
+        name: "High St & North Broadway",
+        description: "Start at the main Clintonville crossroads",
+        latitude: 40.0345,
+        longitude: -83.0047,
+        radiusMeters: 100,
+        sortOrder: 0,
+        isRevealed: true,
+      },
+      {
+        name: "Whetstone Library",
+        description: "Finish at the Clintonville branch library",
+        latitude: 40.0442,
+        longitude: -83.0190,
+        radiusMeters: 100,
+        sortOrder: 1,
+        isRevealed: true,
+      },
+    ],
+  },
+
+  // Point-to-Point (Easy)
+  {
+    name: "Broadway to the Roses",
+    description:
+      "Head west from High Street through quiet Clintonville streets to reach the famous Park of Roses in Whetstone Park.",
+    flavorText:
+      "Follow the scent of ten thousand roses. Well, maybe not in March — but the park is worth it year-round.",
+    type: "point_to_point",
+    difficulty: "easy",
+    xpReward: 100,
+    restCreditReward: 1,
+    checkpoints: [
+      {
+        name: "High St & North Broadway",
+        description: "Start at the Clintonville crossroads",
+        latitude: 40.0345,
+        longitude: -83.0047,
+        radiusMeters: 100,
+        sortOrder: 0,
+        isRevealed: true,
+      },
+      {
+        name: "Whetstone Park of Roses",
+        description: "Finish at the Park of Roses entrance",
+        latitude: 40.0443,
+        longitude: -83.0230,
+        radiusMeters: 120,
+        sortOrder: 1,
+        isRevealed: true,
+      },
+    ],
+  },
+
+  // Collector (Medium)
+  {
+    name: "Clintonville Green Loop",
+    description:
+      "Hit three green spaces around Clintonville in any order. Parks, trails, and tree-lined streets — this is why you moved here.",
+    flavorText:
+      "Clintonville: where the sidewalks have more tree roots than cracks.",
+    type: "collector",
+    difficulty: "medium",
+    xpReward: 250,
+    restCreditReward: 2,
+    checkpoints: [
+      {
+        name: "Whetstone Park of Roses",
+        description: "The crown jewel of Clintonville — 13 acres of gardens",
+        latitude: 40.0443,
+        longitude: -83.0230,
+        radiusMeters: 120,
+        sortOrder: 0,
+        isRevealed: true,
+      },
+      {
+        name: "Olentangy Trail at North Broadway",
+        description: "Where the neighborhood meets the trail along the river",
+        latitude: 40.0340,
+        longitude: -83.0240,
+        radiusMeters: 120,
+        sortOrder: 1,
+        isRevealed: true,
+      },
+      {
+        name: "Clinton-Como Park",
+        description: "The neighborhood park tucked between Como and Clinton Heights",
+        latitude: 40.0355,
+        longitude: -83.0095,
+        radiusMeters: 100,
+        sortOrder: 2,
+        isRevealed: true,
+      },
+    ],
+  },
+
+  // Collector (Hard)
+  {
+    name: "Clintonville Full Send",
+    description:
+      "Cover the full spread of Clintonville — from the Olentangy Trail to Indianola, north to south. A proper neighborhood tour.",
+    flavorText:
+      "You call yourself a Clintonville runner? Prove it.",
+    type: "collector",
+    difficulty: "hard",
+    xpReward: 400,
+    restCreditReward: 3,
+    checkpoints: [
+      {
+        name: "Whetstone Park of Roses",
+        description: "The Park of Roses on the west side of the neighborhood",
+        latitude: 40.0443,
+        longitude: -83.0230,
+        radiusMeters: 120,
+        sortOrder: 0,
+        isRevealed: true,
+      },
+      {
+        name: "High St & North Broadway",
+        description: "The central crossroads of Clintonville",
+        latitude: 40.0345,
+        longitude: -83.0047,
+        radiusMeters: 100,
+        sortOrder: 1,
+        isRevealed: true,
+      },
+      {
+        name: "Graceland Shopping Center",
+        description: "The north end of Clintonville's High Street corridor",
+        latitude: 40.0500,
+        longitude: -83.0130,
+        radiusMeters: 120,
+        sortOrder: 2,
+        isRevealed: true,
+      },
+      {
+        name: "Indianola & North Broadway",
+        description: "The east side of Clintonville where the residential streets begin",
+        latitude: 40.0345,
+        longitude: -82.9985,
+        radiusMeters: 100,
+        sortOrder: 3,
+        isRevealed: true,
+      },
+    ],
+  },
+
+  // Scavenger (Medium)
+  {
+    name: "The Clintonville Garden Secret",
+    description:
+      "Somewhere in Clintonville, a garden holds a secret. Follow the hints to uncover what the roses are hiding.",
+    flavorText:
+      "Thirteen acres of beauty, and one hidden truth. Start running.",
+    type: "scavenger",
+    difficulty: "medium",
+    xpReward: 200,
+    restCreditReward: 2,
+    checkpoints: [
+      {
+        name: "The Hidden Gazebo",
+        description: "A sheltered spot within the gardens",
+        hint: "In the park named for a sharpening stone, seek shelter where roses frame a roof but no walls. The oldest plantings know the way.",
+        latitude: 40.0450,
+        longitude: -83.0220,
+        radiusMeters: 80,
+        sortOrder: 0,
+        isRevealed: false,
+      },
+    ],
+  },
+
   // === SCAVENGER (Medium) ===
   {
     name: "The Hidden Deer",
@@ -448,7 +634,7 @@ async function seed() {
   console.log("Seeding Stride Quests database...");
 
   for (const quest of questSeeds) {
-    const rows = db
+    const rows = await db
       .insert(schema.quests)
       .values({
         name: quest.name,
@@ -464,7 +650,7 @@ async function seed() {
     const insertedQuest = rows[0];
 
     for (const cp of quest.checkpoints) {
-      db.insert(schema.questCheckpoints)
+      await db.insert(schema.questCheckpoints)
         .values({
           questId: insertedQuest.id,
           name: cp.name,

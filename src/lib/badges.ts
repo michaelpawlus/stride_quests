@@ -16,7 +16,7 @@ type BadgeDefinition = {
   description: string;
   icon: string;
   category: BadgeCategory;
-  check: (userId: number) => boolean;
+  check: (userId: number) => Promise<boolean>;
 };
 
 const BADGES: BadgeDefinition[] = [
@@ -27,8 +27,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Complete your first quest",
     icon: "Footprints",
     category: "quest",
-    check: (userId) => {
-      const stats = getOrCreateStats(userId);
+    check: async (userId) => {
+      const stats = await getOrCreateStats(userId);
       return stats.questsCompleted >= 1;
     },
   },
@@ -38,8 +38,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Complete 10 quests",
     icon: "Award",
     category: "quest",
-    check: (userId) => {
-      const stats = getOrCreateStats(userId);
+    check: async (userId) => {
+      const stats = await getOrCreateStats(userId);
       return stats.questsCompleted >= 10;
     },
   },
@@ -49,8 +49,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Complete a point-to-point quest",
     icon: "Route",
     category: "quest",
-    check: (userId) => {
-      const completed = db
+    check: async (userId) => {
+      const completed = await db
         .select({ type: quests.type })
         .from(userQuests)
         .innerJoin(quests, eq(userQuests.questId, quests.id))
@@ -71,8 +71,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Complete a scavenger quest",
     icon: "Search",
     category: "quest",
-    check: (userId) => {
-      const completed = db
+    check: async (userId) => {
+      const completed = await db
         .select({ type: quests.type })
         .from(userQuests)
         .innerJoin(quests, eq(userQuests.questId, quests.id))
@@ -93,14 +93,14 @@ const BADGES: BadgeDefinition[] = [
     description: "Complete all collector quests",
     icon: "Trees",
     category: "quest",
-    check: (userId) => {
-      const allCollectors = db
+    check: async (userId) => {
+      const allCollectors = await db
         .select({ id: quests.id })
         .from(quests)
         .where(eq(quests.type, "collector"))
         .all();
       if (allCollectors.length === 0) return false;
-      const completedCollectors = db
+      const completedCollectors = await db
         .select({ questId: userQuests.questId })
         .from(userQuests)
         .innerJoin(quests, eq(userQuests.questId, quests.id))
@@ -123,8 +123,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Achieve a 30-day streak",
     icon: "Flame",
     category: "momentum",
-    check: (userId) => {
-      const stats = getOrCreateStats(userId);
+    check: async (userId) => {
+      const stats = await getOrCreateStats(userId);
       return stats.longestStreak >= 30;
     },
   },
@@ -136,8 +136,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Earn 100 XP",
     icon: "Zap",
     category: "xp",
-    check: (userId) => {
-      const user = db
+    check: async (userId) => {
+      const user = await db
         .select({ totalXp: users.totalXp })
         .from(users)
         .where(eq(users.id, userId))
@@ -151,8 +151,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Earn 500 XP",
     icon: "Star",
     category: "xp",
-    check: (userId) => {
-      const user = db
+    check: async (userId) => {
+      const user = await db
         .select({ totalXp: users.totalXp })
         .from(users)
         .where(eq(users.id, userId))
@@ -166,8 +166,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Earn 1000 XP",
     icon: "Crown",
     category: "xp",
-    check: (userId) => {
-      const user = db
+    check: async (userId) => {
+      const user = await db
         .select({ totalXp: users.totalXp })
         .from(users)
         .where(eq(users.id, userId))
@@ -183,8 +183,8 @@ const BADGES: BadgeDefinition[] = [
     description: "Sync 10 activities from Strava",
     icon: "Activity",
     category: "activity",
-    check: (userId) => {
-      const stats = getOrCreateStats(userId);
+    check: async (userId) => {
+      const stats = await getOrCreateStats(userId);
       return stats.activitiesSynced >= 10;
     },
   },
@@ -194,15 +194,15 @@ const BADGES: BadgeDefinition[] = [
     description: "Sync 50 activities from Strava",
     icon: "Heart",
     category: "activity",
-    check: (userId) => {
-      const stats = getOrCreateStats(userId);
+    check: async (userId) => {
+      const stats = await getOrCreateStats(userId);
       return stats.activitiesSynced >= 50;
     },
   },
 ];
 
-export function checkAndAwardBadges(userId: number): string[] {
-  const existing = db
+export async function checkAndAwardBadges(userId: number): Promise<string[]> {
+  const existing = await db
     .select({ badgeId: userBadges.badgeId })
     .from(userBadges)
     .where(eq(userBadges.userId, userId))
@@ -214,8 +214,8 @@ export function checkAndAwardBadges(userId: number): string[] {
   for (const badge of BADGES) {
     if (earnedIds.has(badge.id)) continue;
 
-    if (badge.check(userId)) {
-      db.insert(userBadges)
+    if (await badge.check(userId)) {
+      await db.insert(userBadges)
         .values({ userId, badgeId: badge.id })
         .run();
       newBadgeIds.push(badge.id);
@@ -225,8 +225,8 @@ export function checkAndAwardBadges(userId: number): string[] {
   return newBadgeIds;
 }
 
-export function getUserBadges(userId: number): UserBadge[] {
-  const earned = db
+export async function getUserBadges(userId: number): Promise<UserBadge[]> {
+  const earned = await db
     .select()
     .from(userBadges)
     .where(eq(userBadges.userId, userId))

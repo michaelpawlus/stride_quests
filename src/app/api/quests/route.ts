@@ -16,7 +16,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const allQuests = db
+  const allQuests = await db
     .select()
     .from(quests)
     .where(eq(quests.isActive, true))
@@ -25,7 +25,7 @@ export async function GET() {
   const result: QuestWithProgress[] = [];
 
   for (const quest of allQuests) {
-    const checkpointCount = db
+    const checkpointCount = await db
       .select({ count: count() })
       .from(questCheckpoints)
       .where(eq(questCheckpoints.questId, quest.id))
@@ -34,7 +34,7 @@ export async function GET() {
     const totalCheckpoints = checkpointCount?.count ?? 0;
 
     // Check if user has this quest active/completed
-    const uq = db
+    const uq = await db
       .select()
       .from(userQuests)
       .where(
@@ -47,7 +47,7 @@ export async function GET() {
 
     let completedCheckpoints = 0;
     if (uq) {
-      const hitCount = db
+      const hitCount = await db
         .select({ count: count() })
         .from(checkpointHits)
         .where(eq(checkpointHits.userQuestId, uq.id))

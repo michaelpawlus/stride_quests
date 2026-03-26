@@ -19,14 +19,14 @@ export async function GET(request: NextRequest) {
     const data = await exchangeCodeForTokens(code);
 
     // Upsert user
-    let user = db
+    let user = await db
       .select()
       .from(users)
       .where(eq(users.stravaAthleteId, data.athlete.id))
       .get();
 
     if (user) {
-      db.update(users)
+      await db.update(users)
         .set({
           firstName: data.athlete.firstname,
           lastName: data.athlete.lastname,
@@ -38,7 +38,7 @@ export async function GET(request: NextRequest) {
         .where(eq(users.id, user.id))
         .run();
     } else {
-      const rows = db
+      const rows = await db
         .insert(users)
         .values({
           stravaAthleteId: data.athlete.id,
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
       user = rows[0];
 
       // Create user stats row
-      db.insert(userStats).values({ userId: user.id }).run();
+      await db.insert(userStats).values({ userId: user.id }).run();
     }
 
     await createSession({

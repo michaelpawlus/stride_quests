@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user by Strava athlete ID
-    const user = db
+    const user = await db
       .select()
       .from(users)
       .where(eq(users.stravaAthleteId, event.owner_id))

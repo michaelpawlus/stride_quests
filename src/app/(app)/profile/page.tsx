@@ -11,13 +11,13 @@ export default async function ProfilePage() {
   const session = await getSession();
   if (!session) return null;
 
-  const user = db
+  const user = await db
     .select()
     .from(users)
     .where(eq(users.id, session.userId))
     .get();
 
-  const stats = db
+  const stats = await db
     .select()
     .from(userStats)
     .where(eq(userStats.userId, session.userId))

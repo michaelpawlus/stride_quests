@@ -26,7 +26,7 @@ export async function GET(
     return NextResponse.json({ error: "Invalid quest ID" }, { status: 400 });
   }
 
-  const quest = db
+  const quest = await db
     .select()
     .from(quests)
     .where(eq(quests.id, questId))
@@ -36,15 +36,15 @@ export async function GET(
     return NextResponse.json({ error: "Quest not found" }, { status: 404 });
   }
 
-  const checkpointRows = db
+  const checkpointRows = (await db
     .select()
     .from(questCheckpoints)
     .where(eq(questCheckpoints.questId, questId))
-    .all()
+    .all())
     .sort((a, b) => a.sortOrder - b.sortOrder);
 
   // Get user quest status
-  const uq = db
+  const uq = await db
     .select()
     .from(userQuests)
     .where(
@@ -57,7 +57,7 @@ export async function GET(
 
   const hitCheckpointIds = new Set<number>();
   if (uq) {
-    const hits = db
+    const hits = await db
       .select()
       .from(checkpointHits)
       .where(eq(checkpointHits.userQuestId, uq.id))
@@ -123,7 +123,7 @@ export async function POST(
     return NextResponse.json({ error: "Invalid quest ID" }, { status: 400 });
   }
 
-  const quest = db
+  const quest = await db
     .select()
     .from(quests)
     .where(eq(quests.id, questId))
@@ -134,7 +134,7 @@ export async function POST(
   }
 
   // Check if already active
-  const existing = db
+  const existing = await db
     .select()
     .from(userQuests)
     .where(
@@ -150,7 +150,7 @@ export async function POST(
     return NextResponse.json({ error: "Quest already active" }, { status: 409 });
   }
 
-  db.insert(userQuests)
+  await db.insert(userQuests)
     .values({
       userId: session.userId,
       questId,
@@ -159,4 +159,3 @@ export async function POST(
 
   return NextResponse.json({ status: "activated" }, { status: 201 });
 }
-

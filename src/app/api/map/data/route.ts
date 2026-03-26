@@ -18,16 +18,16 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const allQuests = db.select().from(quests).where(eq(quests.isActive, true)).all();
-  const allCheckpoints = db.select().from(questCheckpoints).all();
-  const allUserQuests = db
+  const allQuests = await db.select().from(quests).where(eq(quests.isActive, true)).all();
+  const allCheckpoints = await db.select().from(questCheckpoints).all();
+  const allUserQuests = await db
     .select()
     .from(userQuests)
     .where(eq(userQuests.userId, session.userId))
     .all();
 
   const allHits = allUserQuests.length
-    ? db
+    ? await db
         .select()
         .from(checkpointHits)
         .where(eq(checkpointHits.userId, session.userId))
@@ -54,7 +54,7 @@ export async function GET() {
 
   const routePolylines = new Map<number, string[]>();
   if (completedActivityIds.size > 0) {
-    const activities = db.select().from(stravaActivities).all();
+    const activities = await db.select().from(stravaActivities).all();
     const activityMap = new Map(
       activities
         .filter((a) => a.summaryPolyline)

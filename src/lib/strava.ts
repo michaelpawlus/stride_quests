@@ -67,7 +67,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<StravaTo
 }
 
 export async function getValidAccessToken(userId: number): Promise<string> {
-  const user = db
+  const user = await db
     .select()
     .from(users)
     .where(eq(users.id, userId))
@@ -82,7 +82,7 @@ export async function getValidAccessToken(userId: number): Promise<string> {
 
   const tokens = await refreshAccessToken(user.stravaRefreshToken);
 
-  db.update(users)
+  await db.update(users)
     .set({
       stravaAccessToken: tokens.accessToken,
       stravaRefreshToken: tokens.refreshToken,

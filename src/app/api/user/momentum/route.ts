@@ -15,11 +15,11 @@ export async function GET() {
   }
 
   // Reconcile any missed days first
-  reconcileMissedDays(session.userId);
-  checkAndAwardBadges(session.userId);
+  await reconcileMissedDays(session.userId);
+  await checkAndAwardBadges(session.userId);
 
-  const stats = getOrCreateStats(session.userId);
-  const recentDays = getRecentDays(session.userId, 30);
+  const stats = await getOrCreateStats(session.userId);
+  const recentDays = await getRecentDays(session.userId, 30);
 
   const result: UserMomentum = {
     currentStreak: stats.currentStreak,

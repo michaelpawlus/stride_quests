@@ -29,7 +29,7 @@ export async function processStravaActivity(
   stravaActivityId: number
 ): Promise<void> {
   // Check if already processed
-  const existing = db
+  const existing = await db
     .select()
     .from(stravaActivities)
     .where(eq(stravaActivities.stravaActivityId, stravaActivityId))
@@ -45,7 +45,7 @@ export async function processStravaActivity(
   if (activity.type !== "Run") return;
 
   // 2. Store activity
-  db.insert(stravaActivities)
+  await db.insert(stravaActivities)
     .values({
       userId,
       stravaActivityId: activity.id,
@@ -59,8 +59,8 @@ export async function processStravaActivity(
     .run();
 
   // Update synced count
-  const stats = getOrCreateStats(userId);
-  db.update(userStats)
+  const stats = await getOrCreateStats(userId);
+  await db.update(userStats)
     .set({ activitiesSynced: stats.activitiesSynced + 1 })
     .where(eq(userStats.userId, userId))
     .run();
@@ -69,7 +69,7 @@ export async function processStravaActivity(
   const runDate = activity.start_date
     ? activity.start_date.split("T")[0]
     : undefined;
-  logRunDay(userId, runDate);
+  await logRunDay(userId, runDate);
 
   // 4. Decode polyline
   const polyline = activity.map?.summary_polyline;
@@ -79,14 +79,14 @@ export async function processStravaActivity(
   if (route.length === 0) return;
 
   // 5. Get all active quests for this user
-  const activeUserQuests = db
+  const activeUserQuests = await db
     .select()
     .from(userQuests)
     .where(and(eq(userQuests.userId, userId), eq(userQuests.status, "active")))
     .all();
 
   for (const uq of activeUserQuests) {
-    const quest = db
+    const quest = await db
       .select()
       .from(quests)
       .where(eq(quests.id, uq.questId))
@@ -95,15 +95,15 @@ export async function processStravaActivity(
     if (!quest) continue;
 
     // Get all checkpoints for this quest
-    const checkpoints = db
+    const checkpoints = (await db
       .select()
       .from(questCheckpoints)
       .where(eq(questCheckpoints.questId, quest.id))
-      .all()
+      .all())
       .sort((a, b) => a.sortOrder - b.sortOrder);
 
     // Get already-hit checkpoints
-    const existingHits = db
+    const existingHits = await db
       .select()
       .from(checkpointHits)
       .where(eq(checkpointHits.userQuestId, uq.id))
@@ -128,7 +128,7 @@ export async function processStravaActivity(
       });
 
       if (result.hit) {
-        db.insert(checkpointHits)
+        await db.insert(checkpointHits)
           .values({
             userId,
             userQuestId: uq.id,
@@ -156,11 +156,11 @@ export async function processStravaActivity(
     }
 
     if (allHit) {
-      completeQuest(userId, uq.id, quest.xpReward, quest.restCreditReward);
+      await completeQuest(userId, uq.id, quest.xpReward, quest.restCreditReward);
     }
   }
 
-  checkAndAwardBadges(userId);
+  await checkAndAwardBadges(userId);
 }
 
 function getNextScavengerCheckpoints<T extends { id: number; sortOrder: number }>(
@@ -192,14 +192,14 @@ function verifyCheckpointOrder(
   return true;
 }
 
-function completeQuest(
+async function completeQuest(
   userId: number,
   userQuestId: number,
   xpReward: number,
   restCreditReward: number
-): void {
+): Promise<void> {
   // Mark quest completed
-  db.update(userQuests)
+  await db.update(userQuests)
     .set({
       status: "completed",
       completedAt: new Date().toISOString(),
@@ -208,25 +208,25 @@ function completeQuest(
     .run();
 
   // Award XP
-  const user = db
+  const user = await db
     .select()
     .from(users)
     .where(eq(users.id, userId))
     .get();
 
   if (user) {
-    db.update(users)
+    await db.update(users)
       .set({ totalXp: user.totalXp + xpReward })
       .where(eq(users.id, userId))
       .run();
   }
 
   // Award rest credits
-  awardRestCredits(userId, restCreditReward);
+  await awardRestCredits(userId, restCreditReward);
 
   // Update quests completed count
-  const stats = getOrCreateStats(userId);
-  db.update(userStats)
+  const stats = await getOrCreateStats(userId);
+  await db.update(userStats)
     .set({ questsCompleted: stats.questsCompleted + 1 })
     .where(eq(userStats.userId, userId))
     .run();
