@@ -43,10 +43,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ status: "user_not_found" });
     }
 
-    // Process asynchronously (don't block the webhook response)
-    processStravaActivity(user.id, event.object_id).catch((err) =>
-      console.error("Failed to process activity:", err)
-    );
+    // Must await — Vercel kills the execution context after the response is sent
+    await processStravaActivity(user.id, event.object_id);
 
     return NextResponse.json({ status: "ok" });
   } catch (e) {
